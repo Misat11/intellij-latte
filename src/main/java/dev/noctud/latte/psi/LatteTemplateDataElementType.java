@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public class LatteTemplateDataElementType extends TemplateDataElementType {
 
     private final TokenSet elementTypesSet;
+    private boolean potentiallyWorkingWithAttribute;
+    private boolean lookForTagClose;
 
     public LatteTemplateDataElementType(@NonNls String debugName,
                                         Language language,
@@ -35,10 +37,21 @@ public class LatteTemplateDataElementType extends TemplateDataElementType {
                 "Inconsistent tokens stream from " + baseLexer +
                     ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
             currentRange = newRange;
-            if (elementTypesSet.contains(baseLexer.getTokenType())) {
+            if (potentiallyWorkingWithAttribute && baseLexer.getTokenType() == LatteTypes.T_MACRO_OPEN_TAG_OPEN) {
+                potentiallyWorkingWithAttribute = false;
+                result.append("\"");
+                appendCurrentTemplateToken(baseLexer.getTokenEnd(), sourceCode);
+                lookForTagClose = true;
+            } else if (lookForTagClose && baseLexer.getTokenType() == LatteTypes.T_MACRO_TAG_CLOSE) {
+                result.append("\"");
+                appendCurrentTemplateToken(baseLexer.getTokenEnd(), sourceCode);
+                lookForTagClose = false;
+            } else if (elementTypesSet.contains(baseLexer.getTokenType())) {
+                potentiallyWorkingWithAttribute = baseLexer.getTokenType() == LatteTypes.T_TEXT && sourceCode.charAt(baseLexer.getTokenEnd()) == '=' && !lookForTagClose;
                 result.append(sourceCode, baseLexer.getTokenStart(), baseLexer.getTokenEnd());
                 appendCurrentTemplateToken(baseLexer.getTokenEnd(), sourceCode);
             } else {
+                potentiallyWorkingWithAttribute = false;
                 rangeCollector.addOuterRange(currentRange);
             }
             baseLexer.advance();

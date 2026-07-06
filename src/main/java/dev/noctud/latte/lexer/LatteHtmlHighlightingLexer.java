@@ -15,7 +15,7 @@ public class LatteHtmlHighlightingLexer extends LookAheadLexer {
     protected void lookAhead(Lexer baseLexer) {
         IElementType currentToken = baseLexer.getTokenType();
 
-        if (currentToken != LatteTypes.T_TEXT && LatteHtmlUtil.HTML_TOKENS.contains(currentToken)) {
+        if (currentToken != LatteTypes.T_TEXT && LatteHtmlUtil.HTML_TOKENS.contains(currentToken) || currentToken == LatteTypes.T_MACRO_OPEN_TAG_OPEN) {
             advanceLexer(baseLexer);
             replaceCachedType(0, LatteTypes.T_TEXT);
 
